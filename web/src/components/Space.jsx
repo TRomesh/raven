@@ -7,8 +7,13 @@ import Tab from "./Common/Tab/Tab";
 import Tabs from "./Common/Tab/Tabs";
 import { v4 as uuid } from "uuid";
 import { CreateSpace, GetSpace } from "../services/Services";
+import { useRecoilState } from "recoil";
+import { spaceState } from "../store/store";
+import { useToasts } from "react-toast-notifications";
 
 function Space() {
+  let { addToast } = useToasts();
+  const [space, setSpace] = useRecoilState(spaceState);
   const [headers, setHeaders] = useState([
     { id: uuid(), field: "", value: "" },
   ]);
@@ -21,12 +26,35 @@ function Space() {
   });
 
   useEffect(() => {
-    GetSpace();
+    GetSpace((err, data) => {
+      if (err) {
+        addToast("Unable to fetch space! Please try again!", {
+          appearance: "error",
+          autoDismiss: true,
+        });
+      } else {
+        setSpace(data);
+      }
+    });
   }, []);
 
   const createSpace = () => {
-    CreateSpace({ ...basic, id: uuid(), headers, body });
+    let newSpace = { ...basic, id: uuid(), headers, body };
+    CreateSpace(newSpace, (err, data) => {
+      if (err) {
+        addToast("Unable to create space! Please try again!", {
+          appearance: "error",
+          autoDismiss: true,
+        });
+      } else {
+        setSpace([...space, newSpace]);
+      }
+    });
   };
+
+  const updateSpace = (id) => {};
+
+  const deleteSpace = (id) => {};
 
   return (
     <div className="container">
@@ -60,8 +88,8 @@ function Space() {
       <div className="row">
         <div className="col-sm-2 col-md-2"></div>
         <div className="col-sm-8 col-md-8">
-          {[1, 2, 3].map((space) => {
-            return <SpaceCard />;
+          {space.map((data) => {
+            return <SpaceCard key={data.id} data={data} />;
           })}
         </div>
         <div className="col-sm-2 col-md-2"></div>
